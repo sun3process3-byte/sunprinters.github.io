@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#ed1c2b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="SUN Printers">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
 <title>SUN Printers & Graphix — Digital Visiting Card</title>
 <style>
   :root {
@@ -191,7 +198,7 @@
            aria-label="Open website"></a>
 
         <a class="hotspot back-address"
-           href="https://www.google.com/maps/search/?api=1&query=B-28%2F29%2C%20Shree%20Rang%20Ind.%20Co.%20Op.%20Soc.%2C%20B%2Fs%2C%20Navkar%20Engineering%20Company%2C%20Prajapati%20Hospital%20Lane%2C%20Nr.%20Sosyo%20Circle%2C%20Udhna%20Magdalla%20Road%2C%20Surat%2C%20Gujarat%20395017"
+           href="https://maps.app.goo.gl/3fa8yD6qnoraVp6x5?g_st=ac"
            target="_blank"
            rel="noopener"
            aria-label="Open address in Google Maps"></a>
@@ -204,6 +211,10 @@
     <button id="frontBtn" type="button" class="alt">Front</button>
     <button id="backBtn" type="button" class="alt">Back</button>
     <button id="resetBtn" type="button">Reset</button>
+    <button id="saveContactBtn" type="button" class="alt">Save Contact</button>
+  </div>
+  <div style="margin-top:8px;text-align:center;width:330px;max-width:calc(100vw - 24px);position:relative;z-index:100;">
+    <button id="installBtn" type="button" class="alt" style="border:1px solid var(--red);border-radius:11px;padding:11px 14px;background:#fff;color:var(--red);font-weight:700;font-size:13px;cursor:pointer;display:none;">📲 Install Card</button>
   </div>
   <div class="status" id="status">Auto rotate ON • Tap or swipe over a printed contact detail to open it.</div>
 </div>
@@ -363,6 +374,75 @@
   });
 
   render();
+})();
+
+const saveContactBtn = document.getElementById('saveContactBtn');
+if (saveContactBtn) {
+  const vCardData = `BEGIN:VCARD
+VERSION:3.0
+FN:Haresh Rana
+N:Rana;Haresh;;;
+ORG:SUN Printers & Graphix
+TITLE:Director
+TEL;TYPE=CELL,VOICE:+919909288660
+TEL;TYPE=WORK,VOICE:+917383580333
+EMAIL;TYPE=WORK:sales@sunprinters.com
+URL:https://www.sunprinters.com
+ADR;TYPE=WORK:;;B-28/29\, Shree Rang Ind. Co. Op. Soc.\, B/s\, Navkar Engineering Company\, Prajapati Hospital Lane\, Nr. Sosyo Circle\, Udhna Magdalla Road;Surat;Gujarat;395017;India
+NOTE:GSTIN:24AEKPR6462F1ZA
+END:VCARD`;
+  saveContactBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const blob = new Blob([vCardData], {type:'text/vcard;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Haresh-Rana-SUN-Printers.vcf';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+}
+</script>
+<script>
+(function(){
+  let deferredPrompt = null;
+  const installBtn = document.getElementById('installBtn');
+  const toast = document.getElementById('toast');
+  function showInstallMessage(msg){
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(()=>toast.classList.remove('show'), 2600);
+  }
+  window.addEventListener('beforeinstallprompt', (e)=>{
+    e.preventDefault();
+    deferredPrompt = e;
+    if (installBtn) installBtn.style.display = 'inline-block';
+  });
+  if (installBtn) {
+    installBtn.addEventListener('click', async ()=>{
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        installBtn.style.display = 'none';
+      } else {
+        showInstallMessage('Browser menu → Add to Home screen / Install app.');
+      }
+    });
+  }
+  window.addEventListener('appinstalled', ()=>{
+    if (installBtn) installBtn.style.display = 'none';
+    showInstallMessage('SUN Printers card installed on your phone.');
+  });
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', ()=>{
+      navigator.serviceWorker.register('./sw.js', {scope:'./'}).catch(()=>{});
+    });
+  }
 })();
 </script>
 </body>
